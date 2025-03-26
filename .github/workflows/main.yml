@@ -1,4 +1,4 @@
-name: Update RSS Feed
+name: UpdateRSSFeed
 on:
   schedule:
     - cron: "0 */6 * * *"  # Каждые 6 часов
