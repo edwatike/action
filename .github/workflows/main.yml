@@ -2,7 +2,7 @@ name: Update RSS Feed
 on:
   schedule:
     - cron: "0 */6 * * *"  # Каждые 6 часов
-  workflow_dispatch:  # Ручной запуск
+  workflow_dispatch:  # Ручной запуск 
 jobs:
   update:
     runs-on: ubuntu-latest
