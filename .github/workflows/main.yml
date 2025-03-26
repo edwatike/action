@@ -19,8 +19,11 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install feedparser requests beautifulsoup4 html2text selenium==4.9.0
           python -m pip show selenium  # Проверяем, установлен ли selenium
+          python -m pip list  # Выводим список всех установленных пакетов
           sudo apt-get update
           sudo apt-get install -y chromium chromium-chromedriver
+          # Удаляем старую ссылку, если она существует, и создаем новую
+          sudo rm -f /usr/bin/chromedriver
           sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/bin/chromedriver
       - name: Run script
         run: python rss_parser.py
