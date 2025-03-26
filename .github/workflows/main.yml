@@ -20,12 +20,16 @@ jobs:
           python -m pip install feedparser requests beautifulsoup4 html2text selenium==4.9.0 webdriver-manager
           python -m pip show selenium
           python -m pip list
-          # Устанавливаем Google Chrome
+          # Устанавливаем Google Chrome через apt
           sudo apt-get update
-          wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-          sudo apt-get install -y ./google-chrome-stable_current_amd64.deb
-          rm google-chrome-stable_current_amd64.deb
-          google-chrome --version
+          sudo apt-get install -y wget
+          wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+          echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+          # Проверяем, что Chrome установлен
+          google-chrome --version || echo "Google Chrome not found"
+          which google-chrome || echo "google-chrome binary not found"
       - name: Run script
         run: python rss_parser.py
       - name: Commit changes
