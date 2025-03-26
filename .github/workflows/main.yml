@@ -16,7 +16,12 @@ jobs:
           python-version: '3.9'
       - name: Install dependencies
         run: |
-          pip install feedparser requests beautifulsoup4 html2text
+          python -m pip install --upgrade pip
+          python -m pip install feedparser requests beautifulsoup4 html2text selenium==4.9.0
+          python -m pip show selenium  # Проверяем, установлен ли selenium
+          sudo apt-get update
+          sudo apt-get install -y chromium chromium-chromedriver
+          sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/bin/chromedriver
       - name: Run script
         run: python rss_parser.py
       - name: Commit changes
