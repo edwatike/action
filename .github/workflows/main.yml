@@ -17,21 +17,16 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install feedparser requests beautifulsoup4 html2text selenium==4.9.0
+          python -m pip install feedparser requests beautifulsoup4 html2text selenium==4.9.0 webdriver-manager
           python -m pip show selenium
           python -m pip list
+          # Устанавливаем Google Chrome
           sudo apt-get update
-          sudo apt-get install -y chromium chromium-chromedriver
-          # Проверяем, что находится в /usr/bin/chromedriver
-          ls -l /usr/bin/chromedriver || echo "chromedriver not found in /usr/bin"
-          # Удаляем старую ссылку или файл
-          sudo rm -f /usr/bin/chromedriver
-          # Проверяем, что файл удален
-          ls -l /usr/bin/chromedriver || echo "chromedriver removed from /usr/bin"
-          # Создаем новую ссылку
-          sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/bin/chromedriver
-          # Проверяем, что ссылка создана
-          ls -l /usr/bin/chromedriver
+          wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+          sudo apt-get install -y ./google-chrome-stable_current_amd64.deb
+          rm google-chrome-stable_current_amd64.deb
+          # Проверяем, что Chrome установлен
+          google-chrome --version
       - name: Run script
         run: python rss_parser.py
       - name: Commit changes
