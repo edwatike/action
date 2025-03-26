@@ -8,6 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PAT_TOKEN }}  # Используем PAT для checkout
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -24,3 +26,5 @@ jobs:
           git add .
           git commit -m "Updated RSS feed" || echo "No changes"
           git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}  # Используем PAT для push
