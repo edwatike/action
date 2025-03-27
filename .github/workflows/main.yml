@@ -34,7 +34,23 @@ jobs:
           git config --local user.name "GitHub Action"
           git add .
           git commit -m "Updated RSS feed" || echo "No changes to commit"
-          # Принудительный пуш
-          git push --force
+          # Проверяем, есть ли изменения для коммита
+          if git diff --quiet HEAD^ HEAD; then
+            echo "No changes to push, exiting"
+            exit 0
+          fi
+          # Пытаемся синхронизировать с удалённым репозиторием
+          git fetch origin
+          git pull --rebase origin main || {
+            echo "Rebase failed, attempting to resolve conflicts"
+            git rebase --abort
+            git reset --hard origin/main
+            git add .
+            git commit -m "Updated RSS feed after resolving conflicts" || echo "No changes after conflict resolution"
+          }
+          git push || {
+            echo "Push failed, attempting force push as a last resort"
+            git push --force
+          }
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
