@@ -6,7 +6,6 @@ from datetime import datetime
 import hashlib
 import logging
 from playwright.sync_api import sync_playwright
-from markdownify import markdownify
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -17,7 +16,7 @@ rss_urls = [
     "https://www.producthunt.com/feed"
 ]
 output_dir = "_posts"
-start_date = datetime.strptime("2024-01-01", "%Y-%m-%d")
+start_date = datetime.strptime("2025-03-01", "%Y-%m-%d")  # Изменили дату начала парсинга
 existing_urls = set()
 
 # Создание директории
@@ -72,17 +71,17 @@ with sync_playwright() as p:
                         logging.warning(f"Не удалось найти содержимое на странице: {entry.link}")
                         continue
                     
-                    # Конвертируем HTML в Markdown с помощью markdownify
-                    markdown_content = markdownify(str(body_content), heading_style="ATX")
+                    # Сохраняем HTML-контент напрямую
+                    html_content = str(body_content)
                     
                     # Уникальное имя файла
                     title_hash = hashlib.md5(entry.title.encode()).hexdigest()[:8]
                     filename = f"{pub_date.strftime('%Y-%m-%d')}-{title_hash}.md"
                     
-                    # Сохранение Markdown
+                    # Сохранение HTML в Markdown-файле
                     logging.info(f"Сохранение статьи: {filename}")
                     with open(os.path.join(output_dir, filename), 'w') as f:
-                        f.write(f"---\nlayout: post\ntitle: {entry.title}\nurl: {entry.link}\ndate: {pub_date}\n---\n{markdown_content}")
+                        f.write(f"---\nlayout: post\ntitle: {entry.title}\nurl: {entry.link}\ndate: {pub_date}\n---\n{html_content}")
                     
                     existing_urls.add(entry.link)
                 except Exception as e:
