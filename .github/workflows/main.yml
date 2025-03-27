@@ -34,7 +34,8 @@ jobs:
           git config --local user.name "GitHub Action"
           git add .
           git commit -m "Updated RSS feed" || echo "No changes"
-          git pull --rebase origin main  # Добавляем git pull с ребейзом
+          git fetch origin
+          git rebase origin/main || (git rebase --abort && git merge origin/main --no-edit && git commit --allow-empty -m "Merge remote changes")
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
