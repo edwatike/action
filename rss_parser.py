@@ -8,6 +8,10 @@ import logging
 from playwright.sync_api import sync_playwright
 import urllib.parse
 import re
+import cssutils
+
+# Отключаем логирование cssutils, чтобы не засорять вывод
+cssutils.log.setLevel(logging.CRITICAL)
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -65,6 +69,43 @@ def download_resource(url, base_url, asset_type, title_hash):
         logging.error(f"Ошибка при скачивании ресурса {url}: {e}")
         return None
 
+# Функция для обработки CSS и скачивания его зависимостей
+def process_css(css_text, base_url, title_hash):
+    try:
+        sheet = cssutils.parseString(css_text)
+        for rule in sheet:
+            if rule.type == rule.STYLE_RULE:
+                for prop in rule.style:
+                    # Ищем свойства с url (например, background-image, font-face)
+                    if 'url' in prop.value.lower():
+                        url_match = re.search(r'url\(["\']?(.*?)["\']?\)', prop.value)
+                        if url_match:
+                            resource_url = url_match.group(1)
+                            if resource_url.startswith('data:'):
+                                continue  # Пропускаем data URI
+                            filename = download_resource(resource_url, base_url, 'resource', title_hash)
+                            if filename:
+                                # Обновляем URL в CSS
+                                new_url = f"/{assets_dir}/{filename}"
+                                prop.value = re.sub(r'url\(["\']?.*?["\']?\)', f'url("{new_url}")', prop.value)
+            elif rule.type == rule.FONT_FACE_RULE:
+                # Обрабатываем @font-face
+                for prop in rule.style:
+                    if prop.name == 'src':
+                        url_match = re.search(r'url\(["\']?(.*?)["\']?\)', prop.value)
+                        if url_match:
+                            font_url = url_match.group(1)
+                            if font_url.startswith('data:'):
+                                continue
+                            filename = download_resource(font_url, base_url, 'font', title_hash)
+                            if filename:
+                                new_url = f"/{assets_dir}/{filename}"
+                                prop.value = re.sub(r'url\(["\']?.*?["\']?\)', f'url("{new_url}")', prop.value)
+        return sheet.cssText.decode('utf-8')
+    except Exception as e:
+        logging.error(f"Ошибка при обработке CSS: {e}")
+        return css_text
+
 # Парсинг RSS с использованием Playwright
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
@@ -108,14 +149,26 @@ with sync_playwright() as p:
                     # Уникальный хэш для этой статьи
                     title_hash = hashlib.md5(entry.title.encode()).hexdigest()[:8]
                     
-                    # Скачиваем CSS-файлы
+                    # Скачиваем CSS-файлы и их зависимости
                     for link_tag in soup.find_all('link', rel='stylesheet'):
                         css_url = link_tag.get('href')
                         if css_url:
-                            filename = download_resource(css_url, entry.link, 'css', title_hash)
-                            if filename:
+                            # Скачиваем CSS
+                            if not css_url.startswith(('http://', 'https://')):
+                                css_url = urllib.parse.urljoin(entry.link, css_url)
+                            response = requests.get(css_url, timeout=10)
+                            if response.status_code == 200:
+                                css_text = response.text
+                                # Обрабатываем зависимости в CSS
+                                processed_css = process_css(css_text, entry.link, title_hash)
+                                # Сохраняем обработанный CSS
+                                css_filename = f"{title_hash}_{hashlib.md5(css_url.encode()).hexdigest()[:8]}.css"
+                                with open(os.path.join(assets_dir, css_filename), 'w') as f:
+                                    f.write(processed_css)
                                 # Обновляем путь в HTML
-                                link_tag['href'] = f"/{assets_dir}/{filename}"
+                                link_tag['href'] = f"/{assets_dir}/{css_filename}"
+                            else:
+                                logging.warning(f"Не удалось скачать CSS: {css_url}")
                     
                     # Скачиваем изображения
                     for img_tag in body_content.find_all('img'):
