@@ -33,9 +33,8 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add .
-          git commit -m "Updated RSS feed" || echo "No changes"
-          git fetch origin
-          git rebase origin/main || (git rebase --abort && git merge origin/main --no-edit && git commit --allow-empty -m "Merge remote changes")
-          git push
+          git commit -m "Updated RSS feed" || echo "No changes to commit"
+          # Принудительный пуш
+          git push --force
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
