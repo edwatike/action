@@ -16,7 +16,7 @@ rss_urls = [
     "https://www.producthunt.com/feed"
 ]
 output_dir = "_posts"
-start_date = datetime.strptime("2025-03-01", "%Y-%m-%d")  # Изменили дату начала парсинга
+start_date = datetime.strptime("2025-03-01", "%Y-%m-%d")  # Дата начала парсинга
 existing_urls = set()
 
 # Создание директории
