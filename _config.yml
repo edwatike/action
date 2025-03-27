@@ -1,3 +1,8 @@
-title: RSS Feed Archive
-description: A collection of articles from VentureBeat and Product Hunt
-theme: minima
+<article>
+  <h1>{{ page.title }}</h1>
+  <p><small>{{ page.date | date: "%b %-d, %Y" }}</small></p>
+  <p><a href="{{ page.url }}">Original Link</a></p>
+  <div>
+    {{ content | safe }}
+  </div>
+</article>
