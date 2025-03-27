@@ -1,12 +1,12 @@
 import feedparser
 import requests
 from bs4 import BeautifulSoup
-import html2text
 import os
 from datetime import datetime
 import hashlib
 import logging
 from playwright.sync_api import sync_playwright
+from markdownify import markdownify
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -66,16 +66,14 @@ with sync_playwright() as p:
                     content = page.content()
                     soup = BeautifulSoup(content, 'html.parser')
                     
-                    # Полное копирование контента
-                    content = soup.find('body')
-                    if not content:
+                    # Извлекаем содержимое <body>
+                    body_content = soup.find('body')
+                    if not body_content:
                         logging.warning(f"Не удалось найти содержимое на странице: {entry.link}")
                         continue
                     
-                    # Конвертация в Markdown
-                    h = html2text.HTML2Text()
-                    h.ignore_images = False
-                    markdown_content = h.handle(str(content))
+                    # Конвертируем HTML в Markdown с помощью markdownify
+                    markdown_content = markdownify(str(body_content), heading_style="ATX")
                     
                     # Уникальное имя файла
                     title_hash = hashlib.md5(entry.title.encode()).hexdigest()[:8]
@@ -84,7 +82,7 @@ with sync_playwright() as p:
                     # Сохранение Markdown
                     logging.info(f"Сохранение статьи: {filename}")
                     with open(os.path.join(output_dir, filename), 'w') as f:
-                        f.write(f"---\ntitle: {entry.title}\nurl: {entry.link}\ndate: {pub_date}\n---\n{markdown_content}")
+                        f.write(f"---\nlayout: post\ntitle: {entry.title}\nurl: {entry.link}\ndate: {pub_date}\n---\n{markdown_content}")
                     
                     existing_urls.add(entry.link)
                 except Exception as e:
